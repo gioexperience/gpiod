@@ -7,7 +7,7 @@ if [ "$USER" != "root" ]; then
 	exit 0
 fi
 
-apt-get install wiringpi php sshpass php-ssh2 -y
+apt-get install wiringpi php -y
 
 cp ./source/gpiod.conf /etc/gpiod.conf
 
