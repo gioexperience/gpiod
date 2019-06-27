@@ -1,0 +1,162 @@
+#!/usr/bin/env php
+<?php
+
+/*    Usage:  ./gpiod start		#for starting or re-starting all pin event-listen and the lazy server
+              ./gpiod killall		#for killing all listens and the lazy server
+	
+      see www.gioexperience.com for more details
+*/
+
+$ini=parse_ini_file("/etc/gpiod.conf",true);
+
+$listens=array();
+foreach($ini as $section=>$r)
+{
+	if( $section=="lazy_server" ) continue;
+	if( substr($section,0,5)=="event" )
+		array_push($listens,array($r['pin'],$r['url']));
+}
+
+function fast_request($url)
+{
+    //exec("wget -O- \"$url\"");
+	$p=parse_url($url);
+	
+	$fp = fsockopen($p["host"], 80, $errno, $errstr, 30);
+    $out = "GET ".$p["path"]."?".$p["query"]." HTTP/1.1\r\n";
+    $out .= "Host: ".$p["host"]."\r\n";
+    $out .= "Connection: Close\r\n\r\n";
+    fwrite($fp, $out);
+    fclose($fp);
+}
+
+$gpio=trim(exec("whereis gpio | awk '{print $2}'"));
+if( $gpio=="" ) die("Error: gpio not found, reinstall\n");
+
+$gpio_btn=trim(exec("whereis gpio_btn | awk '{print $2}'"));
+if( $gpio_btn=="" ) die("Error: gpio_btn not found, reinstall\n");
+
+$bin="/usr/local/bin/gpiod";
+
+echo "executable gpio_btn found here: $gpio_btn \n";
+
+// *****************************************************************************************************
+
+if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
+{
+	//internal usage --->    gpiod start_single_listen $pin $url
+	$pin=intval(trim($argv[2]));
+	$url=trim($argv[3]);
+	
+	$url=trim($url,"?&");
+	if( strpos($url,"?")===false ) $url.="?1=1";
+	
+	while(true)
+	{
+		echo "Wait for falling edge or pressing pin $pin...\n";
+		$ret=trim(exec("$gpio_btn $pin"));
+		echo "$ret \n";
+		
+		if($ret=="PRESS")
+			fast_request($url.="&pin=$pin&action=PRESS");
+		elseif($ret=="FALLING_EDGE")
+			fast_request($url.="&pin=$pin&action=FALLING_EDGE");
+		else
+			continue;
+	}
+	die();
+}
+if( $argc>1 && $argv[1]=="lazy" )							//for internal use only
+{
+	//internal usage --->    gpiod lazy 
+	$server=trim($ini["lazy_server"]["server"]);
+	$user=trim($ini["lazy_server"]["user"]);
+	$password=trim($ini["lazy_server"]["password"]);
+	$myself=trim(exec("hostname -I | awk '{print $1}'"));
+	
+	if( $server=="" ) die("No lazy server\n");
+	
+	$file_json="/tmp/gpio_lazy.json";
+	exec("touch $file_json");
+
+	$DS18B20s=glob("/sys/bus/w1/devices/28*",GLOB_ONLYDIR );
+
+	while(true)
+	{
+		$json=array();
+		for($i=1;$i<=26;$i++)
+			$json["GPIO$i"]=intval(exec("$gpio -g read $i"));
+
+		foreach($DS18B20s as $DS18B20)
+		{
+			$DS18B20=basename($DS18B20);
+			$line=exec("cat /sys/bus/w1/devices/$DS18B20/w1_slave | grep \"t=\"");
+			$t=substr($line,strpos($line,"t=")+2);
+			$t=round($t/1000,1);
+			$json[$DS18B20]=$t;
+		}
+		
+		$json=json_encode($json,JSON_PRETTY_PRINT);
+
+		if( md5($json)!=md5_file($file_json) )
+		{
+			file_put_contents($file_json,$json);
+			$cmd="sshpass -p{$password} scp $file_json $user@$server:/home/{$user}/{$myself}.json";
+			exec($cmd);
+		}
+		
+		sleep(1);
+	}
+
+	die();
+}
+
+elseif( $argc>1 && $argv[1]=="killall" )
+{
+	//kill all
+	echo "Kill all listens\n";
+	exec("pkill -f 'gpio_btn'");
+	exec("pkill -f 'gpio_btn'");
+	exec("pkill -f 'gpiod start_single_listen'");
+	exec("pkill -f 'gpiod lazy'");
+	exec("pkill -f 'gpio_btn'");
+	exec("pkill -f 'gpiod'");
+	die();
+}
+
+elseif( $argc>1 && $argv[1]=="start" )
+{
+	exec("pkill -f 'gpiod start_single_listen'");
+	sleep(1);
+	exec("pkill -f 'gpiod lazy'");
+	sleep(1);
+
+	foreach ($listens as $listen)
+	{
+		$pin=$listen[0];
+		$url=$listen[1];
+
+		$cmd="$bin start_single_listen $pin \"$url\" ";
+		echo "exec] $cmd \n";
+		exec("$cmd >/dev/null 2>/dev/null &");
+		sleep(2);
+	}
+	
+	echo "Start lazy server....\n";
+	$cmd="$bin lazy";
+	echo "exec] $cmd \n";
+	exec("$cmd >/dev/null 2>/dev/null &");
+
+	echo "All reloaded...\n\n";
+}
+else
+{
+	echo "\n";
+	echo "Usage:  gpiod start     		#for starting or reload all listens\n";
+	echo "        gpiod killall     	#for killing all listens\n";
+	echo "\n";
+	die();
+}
+
+
+?>
