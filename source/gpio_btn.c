@@ -12,8 +12,8 @@
 
 //********************************************************
 //** wait for a "pulse" or "long press"
-//** If there is a "pulse" exit and write "FALLING_EDGE"
-//** If there is a "long pressing" exit and write "PRESS"
+//** If there is a "short pulse" exit and write "SHORT"
+//** If there is a "long pressing" exit and write "LONG"
 //** if detect a noise, exit writing "...noise..."
 //********************************************************
 
@@ -23,7 +23,7 @@ int main(int argc,char **argv)
 	int pin;
 	long int t0;
 	int val=0;
-	int out=0;	//10=press	20=pulse
+	int out=0;	//10=long	20=short
 	
 	pin=atoi(argv[1]);
 
@@ -71,8 +71,8 @@ int main(int argc,char **argv)
 	}
 
 	if( out==0 ) fprintf(stdout,"...noise...\n");
-	if( out==10 ) fprintf(stdout,"PRESS\n");
-	if( out==20 ) fprintf(stdout,"FALLING_EDGE\n");
+	if( out==10 ) fprintf(stdout,"LONG\n");
+	if( out==20 ) fprintf(stdout,"SHORT\n");
 
 	return 0;
 }
