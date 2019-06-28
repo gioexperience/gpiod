@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-/*    Usage:  ./gpiod start		#for starting or re-starting all pin event-listen and the lazy server
+/*    Usage:  ./gpiod start			#for starting or re-starting all pin event-listen and the lazy server
               ./gpiod killall		#for killing all listens and the lazy server
 	
       see www.gioexperience.com for more details
@@ -19,7 +19,6 @@ foreach($ini as $section=>$r)
 
 function fast_request($url)
 {
-    //exec("wget -O- \"$url\"");
 	$p=parse_url($url);
 	
 	$fp = fsockopen($p["host"], 80, $errno, $errstr, 30);
@@ -44,9 +43,14 @@ echo "executable gpio_btn found here: $gpio_btn \n";
 
 if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 {
-	//internal usage --->    gpiod start_single_listen $pin $url
-	$pin=intval(trim($argv[2]));
-	$url=trim($argv[3]);
+	//internal usage --->    gpiod start_single_listen $inisection
+	//$inisection is the section name in the gpiod.conf
+
+	$inisection=$ini["$inisection"];
+	$pin=intval(trim($inisection["pin"]));
+	$url=trim($inisection["url"]);								//for calling an http api
+	$cmd_press=trim($inisection["press"]);						//for exec localy a script or bash command
+	$cmd_falling_edge=trim($inisection["falling_edge"]);		//for exec localy a script or bash command
 	
 	$url=trim($url,"?&");
 	if( strpos($url,"?")===false ) $url.="?1=1";
@@ -55,12 +59,17 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 	{
 		echo "Wait for falling edge or pressing pin $pin...\n";
 		$ret=trim(exec("$gpio_btn $pin"));
-		echo "$ret \n";
 		
 		if($ret=="PRESS")
-			fast_request($url.="&pin=$pin&action=PRESS");
+		{
+			if( $cmd_press!="" ) exec("$cmd_press > /dev/null 2>&1 &");
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=PRESS");
+		}
 		elseif($ret=="FALLING_EDGE")
-			fast_request($url.="&pin=$pin&action=FALLING_EDGE");
+		{
+			if( $cmd_falling_edge!="" ) exec("$cmd_falling_edge > /dev/null 2>&1 &");
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=FALLING_EDGE");
+		}
 		else
 			continue;
 	}
