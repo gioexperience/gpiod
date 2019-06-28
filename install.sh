@@ -9,7 +9,7 @@ fi
 
 apt-get install wiringpi php -y
 
-cp ./source/gpiod.conf /etc/gpiod.conf
+cp ./source/gpiod.ini /etc/gpiod.ini
 
 echo "Compiling gpio_btn.c..."
 gcc ./source/gpio_btn.c -o /usr/local/bin/gpio_btn -lwiringPi
