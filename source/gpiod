@@ -2,7 +2,7 @@
 <?php
 
 /*    Usage:  ./gpiod start			#for starting or re-starting all pin event-listen and the lazy server
-              ./gpiod killall		#for killing all listens and the lazy server
+              ./gpiod killall			#for killing all listens and the lazy server
 	
       see www.gioexperience.com for more details
 */
@@ -13,8 +13,7 @@ $listens=array();
 foreach($ini as $section=>$r)
 {
 	if( $section=="lazy_server" ) continue;
-	if( substr($section,0,5)=="event" )
-		array_push($listens,array($r['pin'],$r['url']));
+	if( substr($section,0,5)=="event" ) array_push($listens,$section);
 }
 
 function fast_request($url)
@@ -150,12 +149,9 @@ elseif( $argc>1 && $argv[1]=="start" )
 	exec("pkill -f 'gpiod lazy'");
 	sleep(1);
 
-	foreach ($listens as $listen)
+	foreach ($listens as $section)
 	{
-		$pin=$listen[0];
-		$url=$listen[1];
-
-		$cmd="$bin start_single_listen $pin \"$url\" ";
+		$cmd="$bin start_single_listen $section ";
 		echo "exec] $cmd \n";
 		exec("$cmd >/dev/null 2>/dev/null &");
 		sleep(2);
