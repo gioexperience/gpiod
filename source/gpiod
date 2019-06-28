@@ -7,7 +7,7 @@
       see www.gioexperience.com for more details
 */
 
-$ini=parse_ini_file("/etc/gpiod.conf",true);
+$ini=parse_ini_file("/etc/gpiod.ini",true);
 
 $listens=array();
 foreach($ini as $section=>$r)
@@ -44,31 +44,41 @@ echo "executable gpio_btn found here: $gpio_btn \n";
 if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 {
 	//internal usage --->    gpiod start_single_listen $inisection
-	//$inisection is the section name in the gpiod.conf
+	//$inisection is the section name in the gpiod.ini
 
-	$inisection=$ini["$inisection"];
+	$inisection=$ini[$argv[2]];
 	$pin=intval(trim($inisection["pin"]));
 	$url=trim($inisection["url"]);								//for calling an http api
-	$cmd_press=trim($inisection["press"]);						//for exec localy a script or bash command
-	$cmd_falling_edge=trim($inisection["falling_edge"]);		//for exec localy a script or bash command
+	$cmd_short=trim($inisection["short"]);						//for exec localy a script or bash command
+	$cmd_long=trim($inisection["long"]);						//for exec localy a script or bash command
+	
+	print_r($inisection);
 	
 	$url=trim($url,"?&");
 	if( strpos($url,"?")===false ) $url.="?1=1";
 	
 	while(true)
 	{
-		echo "Wait for falling edge or pressing pin $pin...\n";
+		echo "Wait for pressing pin $pin...\n";
 		$ret=trim(exec("$gpio_btn $pin"));
 		
-		if($ret=="PRESS")
+		if($ret=="SHORT")
 		{
-			if( $cmd_press!="" ) exec("$cmd_press > /dev/null 2>&1 &");
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=PRESS");
+			if( $cmd_short!="" ) 
+			{
+				echo "Eseguo $cmd_short \n";
+				exec("$cmd_short > /dev/null 2>&1 &");
+			}
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=SHORT");
 		}
-		elseif($ret=="FALLING_EDGE")
+		elseif($ret=="LONG")
 		{
-			if( $cmd_falling_edge!="" ) exec("$cmd_falling_edge > /dev/null 2>&1 &");
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=FALLING_EDGE");
+			if( $cmd_long!="" ) 
+			{
+				echo "Eseguo $cmd_long \n";
+				exec("$cmd_long > /dev/null 2>&1 &");
+			}
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=LONG");
 		}
 		else
 			continue;
