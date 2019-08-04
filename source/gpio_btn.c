@@ -10,6 +10,8 @@
 // sudo gcc gpio_btn.c -o /usr/local/bin/gpio_btn -lwiringPi
 
 
+//IMPORTANT: pin must be INPUT and PULL-UP   ---> active-low
+
 //********************************************************
 //** wait for a "pulse" or "long press"
 //** If there is a "short pulse" exit and write "SHORT"
@@ -33,15 +35,15 @@ int main(int argc,char **argv)
 		return 1 ;
 	}
 
-	//if start with HIGH value, wait for the LOW value
-	if( digitalRead(pin)==1 )
+	//if start with active (LOW), wait for the no-active (HIGH) value
+	if( digitalRead(pin)==0 )
 	{
 		while (digitalRead(pin)==1) 
 			delay(50);
 	}
 
-	//continue do nothing while the state==0
-	while (digitalRead(pin)==0) 
+	//continue do nothing while the state is no-active
+	while (digitalRead(pin)==1) 
 		delay(50);
 
 	//now somebody press the button. We must stay in this loop 
@@ -53,13 +55,13 @@ int main(int argc,char **argv)
 		delay(50);
 		val=digitalRead(pin);
 		
-		if( val==1 && millis()-t0>=2000 )	//if CONTINUE PRESSING for > 2000 ms
+		if( val==0 && millis()-t0>=3000 )	//if CONTINUE PRESSING for > 2000 ms
 		{
 			out=10;
 			break;
 		}
 		
-		if( val==0 ) //if RELEASE THE BUTTON...
+		if( val==1 ) //if RELEASE THE BUTTON...
 		{
 			if( millis()-t0>100 )	//if the pressing had during at least tot ms
 				out=20;
