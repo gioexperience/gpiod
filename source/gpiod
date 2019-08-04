@@ -19,9 +19,10 @@ foreach($ini as $section=>$r)
 function fast_request($url)
 {
 	$p=parse_url($url);
+	$fp = @fsockopen($p["host"], 80, $errno, $errstr, 1);
+	if( $fp==false ) return;
 	
-	$fp = fsockopen($p["host"], 80, $errno, $errstr, 30);
-    $out = "GET ".$p["path"]."?".$p["query"]." HTTP/1.1\r\n";
+	$out = "GET ".$p["path"]."?".$p["query"]." HTTP/1.1\r\n";
     $out .= "Host: ".$p["host"]."\r\n";
     $out .= "Connection: Close\r\n\r\n";
     fwrite($fp, $out);
@@ -59,7 +60,10 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 	while(true)
 	{
 		echo "Wait for pressing pin $pin...\n";
-		$ret=trim(exec("$gpio_btn $pin"));
+		$cmd="$gpio_btn $pin\n";
+		$ret=trim(exec($cmd));
+		
+		echo "...return $ret\n";
 		
 		if($ret=="SHORT")
 		{
