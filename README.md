@@ -21,4 +21,5 @@ example
 
 
 gpio -g mode 4 in
+
 gpio -g mode 4 up
