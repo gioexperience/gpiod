@@ -18,6 +18,7 @@ foreach($ini as $section=>$r)
 
 function fast_request($url)
 {
+	echo "call $url\n";
 	$p=parse_url($url);
 	$fp = @fsockopen($p["host"], 80, $errno, $errstr, 1);
 	if( $fp==false ) return;
@@ -46,7 +47,8 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 	//internal usage --->    gpiod start_single_listen $inisection
 	//$inisection is the section name in the gpiod.ini
 
-	$inisection=$ini[$argv[2]];
+	$key=$argv[2];
+	$inisection=$ini[$key];
 	$pin=intval(trim($inisection["pin"]));
 	$url=trim($inisection["url"]);								//for calling an http api
 	$cmd_short=trim($inisection["short"]);						//for exec localy a script or bash command
@@ -72,7 +74,7 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 				echo "Eseguo $cmd_short \n";
 				exec("$cmd_short > /dev/null 2>&1 &");
 			}
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=SHORT");
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&key=$key&action=SHORT");
 		}
 		elseif($ret=="LONG")
 		{
@@ -81,7 +83,7 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 				echo "Eseguo $cmd_long \n";
 				exec("$cmd_long > /dev/null 2>&1 &");
 			}
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&action=LONG");
+			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&key=$key&action=LONG");
 		}
 		else
 			continue;
