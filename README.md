@@ -2,26 +2,27 @@
 
 sudo apt-get install -y git-core
 
-git clone https://github.com/gioexperience/gpiod.git
+## for install first time
 
-cd gpiod
+git clone https://github.com/gioexperience/gpiod.git'
 
+```cd gpiod
 chmod +x install.sh
+```
 
 #Now edit gpiod.ini
 
-
-sudo ./install.sh
-
+```sudo ./install.sh```
 
 
+## for update from git-hub
 
-#before using, remember to setup pins in read and set up pull-up or pull-down
-#maybe in rc.local?
+```git reset --hard
+git pull```
 
-example
+## before using, remember to setup pins in read and set pull-up (maybe in rc.local)
 
-
+```sudo nano /etc/rc.local
 gpio -g mode 4 in
+gpio -g mode 4 up```
 
-gpio -g mode 4 up
