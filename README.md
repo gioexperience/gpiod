@@ -11,6 +11,10 @@ chmod +x install.sh
 
 Now edit gpiod.ini
 
+```sudo nano source/gpiod.ini```
+
+Now install
+
 ```sudo ./install.sh```
 
 
