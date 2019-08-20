@@ -20,8 +20,10 @@ Now install
 
 ## for update from git-hub
 
-```git reset --hard
-git pull```
+```
+git reset --hard
+git pull
+```
 
 ## before using, remember to setup pins in read and set pull-up (maybe in rc.local)
 
