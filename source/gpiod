@@ -101,6 +101,8 @@ if( $argc>1 && $argv[1]=="lazy" )							//for internal use only
 	if( $server=="" ) die("No lazy server\n");
 	
 	$file_json="/tmp/gpio_lazy.json";
+	exec("rm $file_json");
+	sleep(1);
 	exec("touch $file_json");
 
 	$DS18B20s=glob("/sys/bus/w1/devices/28*",GLOB_ONLYDIR );
