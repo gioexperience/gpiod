@@ -30,6 +30,7 @@ sudo ~/gpiod/install.sh
 cd ~/gpiod
 git reset --hard
 git pull
+chmod +x ~/gpiod/install.sh
 ```
 
 ## for retrieve your old ini for re-installing
