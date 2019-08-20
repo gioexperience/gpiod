@@ -1,16 +1,15 @@
 # gpiod
 
-sudo apt-get install -y git-core
+```sudo apt-get install -y git-core```
 
 ## for install first time
 
-git clone https://github.com/gioexperience/gpiod.git'
-
-```cd gpiod
+```git clone https://github.com/gioexperience/gpiod.git'
+cd gpiod
 chmod +x install.sh
 ```
 
-#Now edit gpiod.ini
+Now edit gpiod.ini
 
 ```sudo ./install.sh```
 
