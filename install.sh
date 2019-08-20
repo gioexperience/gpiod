@@ -19,4 +19,6 @@ echo "installing gpiod..."
 cp ./source/gpiod /usr/local/bin/gpiod
 chmod +x /usr/local/bin/gpiod
 
-echo "Finish\n\n"
+echo "Finish"
+echo ""
+
