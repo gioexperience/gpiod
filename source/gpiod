@@ -74,7 +74,7 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 				echo "Eseguo $cmd_short \n";
 				exec("$cmd_short > /dev/null 2>&1 &");
 			}
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&key=$key&action=SHORT");
+			if( strlen($url)>6 ) fast_request($url."&pin=$pin&key=$key&action=SHORT");
 		}
 		elseif($ret=="LONG")
 		{
@@ -83,7 +83,7 @@ if( $argc>1 && $argv[1]=="start_single_listen" )				//for internal use only
 				echo "Eseguo $cmd_long \n";
 				exec("$cmd_long > /dev/null 2>&1 &");
 			}
-			if( strlen($url)>6 ) fast_request($url.="&pin=$pin&key=$key&action=LONG");
+			if( strlen($url)>6 ) fast_request($url."&pin=$pin&key=$key&action=LONG");
 		}
 		else
 			continue;
