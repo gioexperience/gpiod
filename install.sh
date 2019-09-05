@@ -9,7 +9,6 @@ fi
 
 apt-get install wiringpi php -y
 
-chmod +x ~/gpiod/update.sh
 cp /etc/gpiod.ini /etc/gpiod.ini.old
 cp ./source/gpiod.ini /etc/gpiod.ini
 
