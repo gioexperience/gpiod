@@ -104,34 +104,87 @@ if( $argc>1 && $argv[1]=="lazy" )							//for internal use only
 	exec("rm $file_json");
 	sleep(1);
 	exec("touch $file_json");
-
+	
 	$DS18B20s=glob("/sys/bus/w1/devices/28*",GLOB_ONLYDIR );
+	//start many process, one for sensors
+	foreach($DS18B20s as $DS18B20)
+	{
+		$DS18B20=basename($DS18B20);
+		$pid=pcntl_fork();
+		if( $pid==0 )
+		{
+			echo "Figlio ".getmypid()." per sensore $DS18B20\n";
+			while(true)
+			{
+				$line=exec("cat /sys/bus/w1/devices/$DS18B20/w1_slave | grep \"t=\"");
+				$t=substr($line,strpos($line,"t=")+2);
+				$t=round($t/1000,1);
+				file_put_contents("/tmp/$DS18B20",$t);
+				sleep(5);
+			}
+		}
+	}
+	//**************************
 
+	$t0=microtime(true);
 	while(true)
 	{
 		$json=array();
+		$t0=microtime(true);
+		
+		$rs=array();
+		exec("$gpio readall",$rs);
+		
 		for($i=1;$i<=26;$i++)
-			$json["GPIO$i"]=intval(exec("$gpio -g read $i"));
+		{
+			if( $i==2 ) 	$json["GPIO$i"]=$rs[4][32];
+			elseif( $i==3 ) 	$json["GPIO$i"]=$rs[5][32];
+			elseif( $i==4 ) 	$json["GPIO$i"]=$rs[6][32];
+			elseif( $i==17 ) 	$json["GPIO$i"]=$rs[8][32];
+			elseif( $i==22 ) 	$json["GPIO$i"]=$rs[10][32];
+			elseif( $i==10 )	$json["GPIO$i"]=$rs[12][32];
+			elseif( $i==9 ) 	$json["GPIO$i"]=$rs[13][32];
+			elseif( $i==11 )	$json["GPIO$i"]=$rs[14][32];
+			elseif( $i==5 ) 	$json["GPIO$i"]=$rs[17][32];
+			elseif( $i==6 ) 	$json["GPIO$i"]=$rs[18][32];
+			elseif( $i==13 ) 	$json["GPIO$i"]=$rs[19][32];
+			elseif( $i==19 ) 	$json["GPIO$i"]=$rs[20][32];
+			elseif( $i==26 ) 	$json["GPIO$i"]=$rs[21][32];
 
+			elseif( $i==14 ) 	$json["GPIO$i"]=$rs[6][47];
+			elseif( $i==15 ) 	$json["GPIO$i"]=$rs[7][47];
+			elseif( $i==18 ) 	$json["GPIO$i"]=$rs[8][47];
+			elseif( $i==23 ) 	$json["GPIO$i"]=$rs[10][47];
+			elseif( $i==24 )	$json["GPIO$i"]=$rs[11][47];
+			elseif( $i==25 ) 	$json["GPIO$i"]=$rs[13][47];
+			elseif( $i==8 ) 	$json["GPIO$i"]=$rs[14][47];
+			elseif( $i==7 ) 	$json["GPIO$i"]=$rs[15][47];
+			elseif( $i==1 ) 	$json["GPIO$i"]=$rs[16][47];
+			elseif( $i==12 ) 	$json["GPIO$i"]=$rs[18][47];
+			elseif( $i==16 ) 	$json["GPIO$i"]=$rs[20][47];
+			elseif( $i==20 ) 	$json["GPIO$i"]=$rs[21][47];
+			elseif( $i==21 )	$json["GPIO$i"]=$rs[22][47];
+		}	
+		
+		echo "T:".(microtime(true)-$t0)."\n";
 		foreach($DS18B20s as $DS18B20)
 		{
 			$DS18B20=basename($DS18B20);
-			$line=exec("cat /sys/bus/w1/devices/$DS18B20/w1_slave | grep \"t=\"");
-			$t=substr($line,strpos($line,"t=")+2);
-			$t=round($t/1000,1);
-			$json[$DS18B20]=$t;
+			if( !file_exists("/tmp/$DS18B20") ) touch("/tmp/$DS18B20");
+			$json[$DS18B20]=file_get_contents("/tmp/$DS18B20");
 		}
 		
 		$json=json_encode($json,JSON_PRETTY_PRINT);
 
 		if( md5($json)!=md5_file($file_json) )
 		{
+			echo "cambiato\n";
 			file_put_contents($file_json,$json);
 			$cmd="sshpass -p{$password} scp $file_json $user@$server:/home/{$user}/{$myself}.json";
 			exec($cmd);
 		}
 		
-		sleep(1);
+		usleep(0.1*1000*1000);
 	}
 
 	die();
