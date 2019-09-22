@@ -119,7 +119,12 @@ if( $argc>1 && $argv[1]=="lazy" )							//for internal use only
 				$line=exec("cat /sys/bus/w1/devices/$DS18B20/w1_slave | grep \"t=\"");
 				$t=substr($line,strpos($line,"t=")+2);
 				$t=round($t/1000,1);
+
+				if( !file_exists("/tmp/$DS18B20") ) touch("/tmp/$DS18B20");
+				$flock = fopen("/tmp/$DS18B20", 'r');
+				flock($flock, LOCK_EX);	
 				file_put_contents("/tmp/$DS18B20",$t);
+				fclose($flock);
 				sleep(5);
 			}
 		}
@@ -170,8 +175,12 @@ if( $argc>1 && $argv[1]=="lazy" )							//for internal use only
 		foreach($DS18B20s as $DS18B20)
 		{
 			$DS18B20=basename($DS18B20);
+			
 			if( !file_exists("/tmp/$DS18B20") ) touch("/tmp/$DS18B20");
+			$flock = fopen("/tmp/$DS18B20", 'r');
+			flock($flock, LOCK_EX);	
 			$json[$DS18B20]=file_get_contents("/tmp/$DS18B20");
+			fclose($flock);
 		}
 		
 		$json=json_encode($json,JSON_PRETTY_PRINT);
